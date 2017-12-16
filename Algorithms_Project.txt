@@ -1,0 +1,121 @@
+Input -.csv file containing flight data of each year ranging from 1987-2008
+
+Program1: Schedule.java
+Goal: the 3 airlines with the highest and lowest probability, respectively, for being on schedule
+Formula used:
+column 8- UniqueCarrier unique carrier code(airline)
+column 14 ArrDelay arrival delay, in minutes
+column 15 DepDelay departure delay, in minutes
+if ArrDelay or DepDelay >=10 min, consider it as delay, so On time probability = 1- Total times delayed/ total times that airline flew in that year or years 
+
+a) In Mapper method:
+1)broke down the CSV file to capture each column value.
+2)Captured unique carrier code column value of the row
+3)Checked if the values in column 14 or column 15  > not null and values greater than 10 min, then write the output of mapper function i,e flight code, 1. That is capturing each airline which has a delay of more than 10 min.
+4) For future calculation of number times, each airline flew in that year(data in a file) or in all years (22 years), captured each carrier code appended with some dummy text -CountFlts. eg: HA_CountFlts
+
+
+b) In Combiner method
+For the mapper's output, summed the count of each of keys as
+if maper1 output is: WordA 1 
+    HA 1
+    HA 1
+    HA 1
+    HA_CountFlts 1
+    HA_CountFlts 1
+    HA_CountFlts 1
+output of combiner:
+    HA 3
+    HA_CountFlts 3
+
+In Reducer Class:
+
+c) Reducer function:
+1) Since ArrDelay/ DepDelay gives delay of that airline, to get to OnTime probability, I did (1- probability of delay)
+2) Here calculated total numbers of times an airline delayed by summing mapper output,  that numerator, if the key is appended with CountFlts, then sum of that is denominator
+3) Now calculated a probability of arrival or departure delay =numerator/denominator as we got in step 2.
+4) For on-time probability, i did 1 -  probability of arrival or departure delay
+5) On time probability and the airline code captured in treeset - Carrier_HighOnSchedule and Carrier_LowOnSchedule, the treeset being in descending order of probability.
+5) As I need only top 3 of both high and low on time probability, I kept first 3 and last 3 from tresset Carrier_HighOnSchedule  and Carrier_LowOnSchedule respectively(used removing poll last() and poll first()).
+
+d) Cleanup function
+
+1. Wrote customized cleanup method where I wrote the final output for all reducers. From Carrier_HighOnSchedule  I printed output the top 3 values- that gave airline code having high probability on schedule, along with probability value.
+From Carrier_LowOnSchedule  I printed output the bottom 3 values- that gave airline code having low probability on schedule, along with probability value.
+
+X-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------x
+
+Program2: TaxiTimeInOut.java
+Goal: the 3 airports with the longest and shortest average taxi time per flight (both in and out), respectively
+Formula used:
+column 16- origin airport code
+column 17-destination airport code
+column 19-tax in a column in min for destination  
+column 20-taxi out the column in min for the origin
+
+For origin airport, I captured its taxi out time, for destination I captured its taxi in time
+
+the sum of taxin and taxi out time of an airport/ corresponding count of rows of that airport - average taxi time for that airport.
+
+a) TaxiInOutMap Method:(Mapper):
+
+1)I checked if tax out column not null, write that as output of mapper along with airport code from column 16
+2) I checked if tax in column not null, write that as output of mapper along with airport code from column 17
+
+
+b) TaxiInOutReduce Method (Reducer):
+1) For each of incoming key i.e airport  calculated average taxi time = sum value given from mapper/ count number of times that airport occurs in mapper output
+2) Added the value calculated in step 1 along with airport code in treeset - Airports_HighAvgTaxiTime and Airports_LowAvgTaxiTime ( treeset in descending order)
+3) 5) As I need only top 3 of both high and low on  taxi time I kept first 3 and last 3 from tresset Airports_HighAvgTaxiTime and Airports_LowAvgTaxiTime  respectively(used removing poll last() and poll first()).
+
+c) Cleanup function
+
+1. Wrote customized cleanup method where I wrote the final output for all reducers. From Airports_HighAvgTaxiTime I printed output the top 3 values- that gave airport code having high average taxitime.
+From Airports_LowAvgTaxiTime I printed output the bottom 3 values-that gave airport code having low average taxitime.
+
+
+X-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------x
+
+
+
+Program3: FlightCancellationReason.java
+Goal: the most common reason for flight cancellations. 
+Formula used:
+reason for cancellation (A = carrier, B = weather, C = NAS, D = security), each code associated with reason
+column 21 - checks if flight canceled or not values 0  or 1 respectively
+column 22 - cancellationCode - A or B or C or D
+
+CancelReasonMapper function(Mapper):
+
+1) I checked if column 21==1 i.e flight is canceled, then check if the Cancelled code is given.
+2) if step 1 true, checked if the canceled code is A or B or C or D, accordingly populated canceled reason = carrier or weather or NAS or security
+3) Wrote the output of mapper with key = canceled reason captured in step2 and value=1
+
+CancelReasonReducer(Reducer)
+1) For each key recieved i.e for each canceled reason, added the ones to get the sum of times that reason occurred in the year or years.
+2) Added the sum and key i.e reason in treeset cancelReasonCount 
+3) As needed only top reason only, keep removing bottom values from the treeset (pollast()).
+
+c) Cleanup function
+
+1. Wrote customized cleanup method where I wrote the final output for all reducers. From cancelReasonCount I printed output the top value - that gave the reason for the delay for the most number of times.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
